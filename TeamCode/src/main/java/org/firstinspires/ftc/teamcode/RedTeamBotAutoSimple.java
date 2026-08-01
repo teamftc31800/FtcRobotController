@@ -108,8 +108,8 @@ public class RedTeamBotAutoSimple extends OpMode {
         hasIntake     = (intake     != null);
         hasFlywheel   = (flywheel   != null);
 
-        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft");
-        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight");
+        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft", -1);
+        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight", 1);
 
 
         // Reverse directions so forward stick actually drives forward.

@@ -66,7 +66,7 @@ public class RedTeamBotAutoFarLong extends OpMode {
 
     PATHSTATE pathState;
 
-    private final Pose scorePose = new Pose(78.353, 16.706, Math.toRadians(240)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
+    private final Pose scorePose = new Pose(82.35, 13.411, Math.toRadians(240)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
     private final Pose collectPose = new Pose(100.706, 34.353, Math.toRadians(0));
     private final Pose collectendPose = new Pose(129.176, 34.118, Math.toRadians((0)));
     private final Pose endPose = new Pose(99.765, 16.235, Math.toRadians(240));
@@ -134,7 +134,7 @@ public class RedTeamBotAutoFarLong extends OpMode {
             case COLLECT_TO_END:
                 if(!follower.isBusy()) {
                     /* Set the state to a Case we won't use or define, so it just stops running an new paths */
-                    intake.setPower(-1.0);
+                    intake.setPower(1.0);
                     follower.followPath(collectline);
                     setPathState(PATHSTATE.RETURN_TO_SCORE);
                 }
@@ -206,7 +206,7 @@ public class RedTeamBotAutoFarLong extends OpMode {
 
             case INTAKE:
                 if (hasIntake) {
-                    intake.setPower(-1.0);
+                    intake.setPower(1.0);
                     intakeTimer.reset();
                 }
                 shootstate = SHOOTSTATE.SHOOT_2;
@@ -263,7 +263,7 @@ public class RedTeamBotAutoFarLong extends OpMode {
 
             case INTAKE:
                 if (hasIntake) {
-                    intake.setPower(-1.0);
+                    intake.setPower(1.0);
                     intakeTimer.reset();
                 }
                 shootstate = SHOOTSTATE.SHOOT_2;
@@ -341,9 +341,8 @@ public class RedTeamBotAutoFarLong extends OpMode {
         shootstate = SHOOTSTATE.SHOOT_1;
 
         //leftfeederlauncher
-        leftFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoLeft");
-
-        rightFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoRight");
+        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft", -1);
+        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight", 1);
 
         //arm servo
 

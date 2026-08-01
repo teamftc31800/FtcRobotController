@@ -6,6 +6,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -24,6 +25,17 @@ public class RedTeamBotAutoFarShort extends OpMode {
     private DcMotor intake = null;
     private boolean hasIntake = false;
     private Servo arm = null;
+
+    // Servo positions
+    private static final double SERVO_HOME = 0.0;
+    private static final double SERVO_ACTIVE = 0.1;
+    private static final double SERVO_MIN = 0.0;
+    private static final double SERVO_MAX = 1.0;
+    private static final double SERVO_STEP = 0.1; // speed per loop
+
+    // --- Arm servo angle mapping (EDIT to match your mechanism) ---
+    private static final double ARM_MIN_DEG = 0.0;    // angle at SERVO_MIN
+    private static final double ARM_MAX_DEG = 300.0;  // angle at SERVO_MAX
 
     private enum PATHSTATE {
         PRELOAD_TO_SCORE,
@@ -105,11 +117,11 @@ public class RedTeamBotAutoFarShort extends OpMode {
 
     // ------------------- SHOOTING -------------------
     public void shootLeftArtifacts() {
-        leftFeederLauncher.launch(3150, 0, true, true);
+        leftFeederLauncher.launch(3075, 0, true, true);
     }
 
     public void shootRightArtifacts() {
-        rightFeederLauncher.launch(3150, 0, true, true);
+        rightFeederLauncher.launch(3075, 0, true, true);
     }
 
     public void shootUpdate() {
@@ -149,9 +161,9 @@ public class RedTeamBotAutoFarShort extends OpMode {
                 break;
 
             case INTAKE:
-                if (intakeTimer.milliseconds() < 1000) {
+                if (intakeTimer.milliseconds() < 3000) {
                     if (hasIntake) {
-                        intake.setPower(-1.0);
+                        intake.setPower(1.0);
                     }
                 } else {
                     if (hasIntake) {
@@ -238,8 +250,8 @@ public class RedTeamBotAutoFarShort extends OpMode {
 
         shootstate = SHOOTSTATE.SHOOT_1;
 
-        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft");
-        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight");
+        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft", -1);
+        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight", 1);
 
         intake = hardwareMap.get(DcMotor.class, "intake");
         hasIntake = (intake != null);
@@ -266,12 +278,24 @@ public class RedTeamBotAutoFarShort extends OpMode {
         leftFeederLauncher.launch(0, 0, false, false);
         rightFeederLauncher.launch(0, 0, false, false);
 
-        arm.setPosition(0.5);
+       // arm.setPosition(0.5);
+
+        double presetPos = degToServoPos(120.0);
+        arm.setPosition(presetPos);
     }
 
     @Override
     public void stop() {
         leftFeederLauncher.stop();
         rightFeederLauncher.stop();
+    }
+
+
+    private double degToServoPos(double degrees) {
+        // normalize 0..1 in angle space
+        double t = (degrees - ARM_MIN_DEG) / (ARM_MAX_DEG - ARM_MIN_DEG);
+        t = Math.max(0.0, Math.min(1.0, t));   // clamp
+        // map into [SERVO_MIN, SERVO_MAX]
+        return SERVO_MIN + t * (SERVO_MAX - SERVO_MIN);
     }
 }

@@ -33,7 +33,7 @@ public class RGBIndicatorLight {
     // DIRECT COLOR POSITIONS
     // ----------------------
 
-    public void red()     { setPos(0.10); }
+    public void red()     { setPos(0.15); }
     public void orange()  { setPos(0.20); }
     public void yellow()  { setPos(0.30); }
     public void green()   { setPos(0.40); }  // ← This will be true green

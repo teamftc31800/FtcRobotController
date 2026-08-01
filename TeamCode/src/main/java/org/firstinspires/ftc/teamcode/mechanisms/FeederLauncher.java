@@ -45,7 +45,6 @@ public class FeederLauncher {
         LAUNCHED      // Completed shot
     }
 
-    private double servoPower = 0.0;
     LaunchState launchState = LaunchState.IDLE;
 
     private boolean shoot = false;         // Flags when a shot sequence begins
@@ -58,11 +57,14 @@ public class FeederLauncher {
     private String flyWheelName;
     private String feederName;
 
-    public void init(HardwareMap hwMap, Telemetry telemetry, String launcherName, String feederName) {
+    private double ServoPower = 0.0;
+
+    public void init(HardwareMap hwMap, Telemetry telemetry, String launcherName, String feederName, double servopower) {
 
         this.telemetry = telemetry;
         this.flyWheelName = launcherName;
         this.feederName = feederName;
+        this.ServoPower = servopower;
 
         // Attempt to assign flywheel motor from configuration
         try {
@@ -176,11 +178,11 @@ public class FeederLauncher {
                 break;
 
             case LAUNCHING:
-                servoPower = -1.0; // Push item into flywheel (direction depends on servo mounting)
+                //ServoPower = ServoPower; // Push item into flywheel (direction depends on servo mounting)
 
                 if (hasFeeder) {
                     if (shoot) {
-                        feeder.setPower(servoPower);      // Activate feeder
+                        feeder.setPower(ServoPower);      // Activate feeder
                         feederTimer.reset();
                         shoot = false;
                     } else {
@@ -193,9 +195,9 @@ public class FeederLauncher {
                 break;
 
             case LAUNCHED:
-                servoPower = 0; // Stop feeder
+                //ServoPower = 0; // Stop feeder
                 if (hasFeeder) {
-                    feeder.setPower(servoPower);
+                    feeder.setPower(0);
                     launchState = LaunchState.SPIN_UP; // Keep wheel spinning for next shot
                 }
                 break;

@@ -129,8 +129,8 @@ public class TeamBotTeleop extends OpMode {
         }
 
         // Launchers
-        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft");
-        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight");
+        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft", -1);
+        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight", 1);
 
         // AprilTag
         aprilTagWebcam.init(hardwareMap, telemetry);

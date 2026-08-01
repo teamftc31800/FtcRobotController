@@ -7,12 +7,14 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.mechanisms.FeederLauncher;
+
 
 @Autonomous(name = "RedTeamBotAutoNearShort", group = "Examples")
 public class RedTeamBotAutoNearShort extends OpMode {
@@ -222,9 +224,9 @@ public class RedTeamBotAutoNearShort extends OpMode {
                 break;
 
             case INTAKE:
-                if (intakeTimer.milliseconds() < 1000) {
+                if (intakeTimer.milliseconds() < 3000) {
                     if (hasIntake) {
-                        intake.setPower(-1.0);
+                        intake.setPower(1.0);
                     }
                 } else {
                     if (hasIntake) {
@@ -324,9 +326,9 @@ public class RedTeamBotAutoNearShort extends OpMode {
         shootstate = SHOOTSTATE.SHOOT_1;
 
         //leftfeederlauncher
-        leftFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoLeft");
+        leftFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoLeft", -1);
 
-        rightFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoRight");
+        rightFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoRight", 1);
 
         intake = hardwareMap.get(DcMotor.class, "intake");
 

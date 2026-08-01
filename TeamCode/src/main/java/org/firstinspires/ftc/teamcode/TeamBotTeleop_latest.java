@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -13,13 +14,14 @@ import org.firstinspires.ftc.teamcode.mechanisms.AprilTagWebcam;
 import org.firstinspires.ftc.teamcode.mechanisms.RGBIndicatorLight;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
+@Disabled
 @TeleOp(name="TeamBotTeleop_latest", group="Drive")
 public class TeamBotTeleop_latest extends OpMode {
 
     // -----------------------------
     // AprilTag + RGB (single instance)
     // -----------------------------
-    private final AprilTagWebcam aprilTagWebcam = new AprilTagWebcam();
+//    private final AprilTagWebcam aprilTagWebcam = new AprilTagWebcam();
     private final RGBIndicatorLight light = new RGBIndicatorLight();
 
     private final RPM_per_dist distToRPM = new RPM_per_dist();
@@ -39,6 +41,7 @@ public class TeamBotTeleop_latest extends OpMode {
 
     // Flywheel (high-speed shooter)
     private DcMotorEx flywheel = null;
+    private DcMotorEx flywheel2 = null;
 
     // Feeder motor (312 rpm goBILDA)
     private DcMotorEx feederMotor;
@@ -48,6 +51,7 @@ public class TeamBotTeleop_latest extends OpMode {
     private CRServo feederServoRight = null;
 
     private boolean hasFlywheel = false;
+    private boolean hasFlywheel2 = false;
     private boolean hasFeederMotor = false;
     private boolean hasFeederServoLeft = false;
     private boolean hasFeederServoRight = false;
@@ -140,6 +144,7 @@ public class TeamBotTeleop_latest extends OpMode {
         backRight  = getMotor("right_back_drive");
         intake     = getMotor("intake");
         flywheel   = getMotorEx("launcher"); // needs DcMotorEx for velocity
+        flywheel2  = getMotorEx("launcher2"); // needs DcMotorEx for velocity
 
 //        flywheel   = flywheeltuner.init(telemetry, hardwareMap, gamepad1);
 
@@ -149,6 +154,7 @@ public class TeamBotTeleop_latest extends OpMode {
         hasBackRight  = (backRight  != null);
         hasIntake     = (intake     != null);
         hasFlywheel   = (flywheel   != null);
+        hasFlywheel2  = (flywheel2  != null);
 
         // Drivetrain directions
         if (hasFrontLeft)  frontLeft.setDirection(DcMotor.Direction.REVERSE);
@@ -177,6 +183,15 @@ public class TeamBotTeleop_latest extends OpMode {
             flywheel.setDirection(DcMotor.Direction.FORWARD);
         }
 
+        if (hasFlywheel2) {
+            // Shooter usually FLOATS on zero, so wheel can spin down naturally.
+            flywheel2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+            // We’ll switch to RUN_USING_ENCODER so .setVelocity() works in loop()
+            flywheel2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            flywheel2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            flywheel2.setDirection(DcMotor.Direction.REVERSE);
+        }
 
         // Feeder motor
         try {
@@ -219,16 +234,16 @@ public class TeamBotTeleop_latest extends OpMode {
 
 
         // AprilTag
-        aprilTagWebcam.init(hardwareMap, telemetry);
+//        aprilTagWebcam.init(hardwareMap, telemetry);
 
         // ~1 foot (12 inches) shoot window
-        aprilTagWebcam.setTargetRange(targetDist);
-        aprilTagWebcam.setRangeTolerance(targetDistTol);      // 10–14 inches
-        aprilTagWebcam.setTargetBearing(targetBearing);
-        aprilTagWebcam.setBearingTolerance(targetBearingTol);
+//        aprilTagWebcam.setTargetRange(targetDist);
+//        aprilTagWebcam.setRangeTolerance(targetDistTol);      // 10–14 inches
+//        aprilTagWebcam.setTargetBearing(targetBearing);
+//        aprilTagWebcam.setBearingTolerance(targetBearingTol);
 
         // Status
-        aprilTagWebcam.reportHardwareStatus();
+//        aprilTagWebcam.reportHardwareStatus();
 
 //        leftFeederLauncher.reportHardwareStatus();
 //        rightFeederLauncher.reportHardwareStatus();
@@ -246,31 +261,31 @@ public class TeamBotTeleop_latest extends OpMode {
         // -----------------------------
         // AprilTag Update + Shoot Ready
         // -----------------------------
-        aprilTagWebcam.update();
+//        aprilTagWebcam.update();
 
-        AprilTagDetection tag24 = aprilTagWebcam.getTagBySpecificId(24); // RED goal
-        AprilTagDetection tag20 = aprilTagWebcam.getTagBySpecificId(20); // BLUE goal
+//        AprilTagDetection tag24 = aprilTagWebcam.getTagBySpecificId(24); // RED goal
+//        AprilTagDetection tag20 = aprilTagWebcam.getTagBySpecificId(20); // BLUE goal
 
         // Telemetry (optional but useful)
-        if (tag24 != null) {
-            telemetry.addLine("Seeing Tag 24 (RED GOAL)");
-            telemetry.addData("Tag24 Range (in target 36 tol 6)", tag24.ftcPose.range);
-            telemetry.addData("Tag24 Bearing (deg target -3 tol 7)", tag24.ftcPose.bearing);
-        }
-        if (tag20 != null) {
-            telemetry.addLine("Seeing Tag 20 (BLUE GOAL)");
-            telemetry.addData("Tag20 Range (in target 36 tol 6)", tag20.ftcPose.range);
-            telemetry.addData("Tag20 Bearing (deg target 0 tol 3)", tag20.ftcPose.bearing);
-        }
+//        if (tag24 != null) {
+//            telemetry.addLine("Seeing Tag 24 (RED GOAL)");
+//            telemetry.addData("Tag24 Range (in target 36 tol 6)", tag24.ftcPose.range);
+//            telemetry.addData("Tag24 Bearing (deg target -3 tol 7)", tag24.ftcPose.bearing);
+//        }
+//        if (tag20 != null) {
+//            telemetry.addLine("Seeing Tag 20 (BLUE GOAL)");
+//            telemetry.addData("Tag20 Range (in target 36 tol 6)", tag20.ftcPose.range);
+//            telemetry.addData("Tag20 Bearing (deg target 0 tol 3)", tag20.ftcPose.bearing);
+//        }
 
         // In-range if either goal tag is in the ~1ft zone
-        boolean inShootRange =
-                aprilTagWebcam.IsRobotinZone(24) ||
-                        aprilTagWebcam.IsRobotinZone(20);
-
-        // Debounce so light doesn't flicker
-        if (inShootRange) shootInRangeCount++;
-        else shootInRangeCount = 0;
+//        boolean inShootRange =
+//                aprilTagWebcam.IsRobotinZone(24) ||
+//                        aprilTagWebcam.IsRobotinZone(20);
+//
+//        // Debounce so light doesn't flicker
+//        if (inShootRange) shootInRangeCount++;
+//        else shootInRangeCount = 0;
 
         if (shootInRangeCount >= SHOOT_DEBOUNCE_FRAMES) {
             telemetry.addData("✅ SHOOT RANGE (Tag 24 or 20)", targetDist+'\t'+targetDistTol);
@@ -465,6 +480,8 @@ public class TeamBotTeleop_latest extends OpMode {
                 // Spin up flywheel to target velocity
                 double targetTPS = rpmToTicksPerSec(FLYWHEEL_TARGET_RPM, FLYWHEEL_TPR);
                 flywheel.setVelocity(targetTPS);
+                if (hasFlywheel2){flywheel2.setVelocity(targetTPS);}
+
 
                 // Read actual RPM
                 double currentTPS = flywheel.getVelocity(); // ticks/sec
@@ -650,12 +667,11 @@ public class TeamBotTeleop_latest extends OpMode {
         return SERVO_MIN + t * (SERVO_MAX - SERVO_MIN);
     }
 
-
-
     @Override
     public void start() {
         // Start flywheels on launchers (not ready to shoot)
         double targetTPS = rpmToTicksPerSec(FLYWHEEL_TARGET_RPM, FLYWHEEL_TPR);
         flywheel.setVelocity(targetTPS);
+        flywheel2.setVelocity(targetTPS);
     }
 }
