@@ -54,6 +54,11 @@ public class PinpointOdometry {
         pinpoint.setPosition(currentPose);
     }
 
+    /** Update pod offsets at runtime (for live tuning). */
+    public void setOffsets(double xOffset, double yOffset) {
+        pinpoint.setOffsets(xOffset, yOffset, DistanceUnit.INCH);
+    }
+
     public double getVelocityX() { return pinpoint.getVelX(DistanceUnit.INCH); }
     public double getVelocityY() { return pinpoint.getVelY(DistanceUnit.INCH); }
     public double getAngularVelocityDeg() { return pinpoint.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES); }

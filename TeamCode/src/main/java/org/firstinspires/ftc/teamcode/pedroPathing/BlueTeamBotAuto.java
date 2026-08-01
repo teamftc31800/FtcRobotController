@@ -179,9 +179,8 @@ public class BlueTeamBotAuto extends OpMode {
         opmodeTimer.resetTimer();
 
         //leftfeederlauncher
-        leftFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoLeft");
-
-        rightFeederLauncher.init(hardwareMap,telemetry,"null","feederServoRight");
+        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft", -1);
+        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight", 1);
 
         follower = Constants.createFollower(hardwareMap);
         buildPaths();

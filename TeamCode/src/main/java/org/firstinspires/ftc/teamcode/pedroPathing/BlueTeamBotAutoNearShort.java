@@ -67,9 +67,9 @@ public class BlueTeamBotAutoNearShort extends OpMode {
     PATHSTATE pathState;
 
     private final Pose startPose = new Pose(20.941, 121.647,  Math.toRadians(315)); // Start Pose of our robot.
-    private final Pose scorePose = new Pose(41.176, 102.353, Math.toRadians(315)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
-    private final Pose returnPose = new Pose(41.176, 102.353, Math.toRadians(315));
-    private final Pose endPose = new Pose(30.588, 112.235, Math.toRadians(315)); // Highest (First Set) of Artifacts from the Spike Mark.
+    private final Pose scorePose = new Pose(47.99, 95.29, Math.toRadians(315)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
+    private final Pose returnPose = new Pose(30.588, 112.253, Math.toRadians(315));
+    private final Pose endPose = new Pose(20.706, 104.235, Math.toRadians(315)); // Highest (First Set) of Artifacts from the Spike Mark.
 //    private final Pose pickup2Pose = new Pose(24, 24, Math.toRadians(90)); // Middle (Second Set) of Artifacts from the Spike Mark.
 //    private final Pose pickup3Pose = new Pose(12, 12, Math.toRadians(90)); // Lowest (Third Set) of Artifacts from the Spike Mark.
 
@@ -222,9 +222,9 @@ public class BlueTeamBotAutoNearShort extends OpMode {
                 break;
 
             case INTAKE:
-                if (intakeTimer.milliseconds() < 1000) {
+                if (intakeTimer.milliseconds() < 3000) {
                     if (hasIntake) {
-                        intake.setPower(-1.0);
+                        intake.setPower(1.0);
                     }
                 } else {
                     if (hasIntake) {
@@ -324,9 +324,8 @@ public class BlueTeamBotAutoNearShort extends OpMode {
         shootstate = SHOOTSTATE.SHOOT_1;
 
         //leftfeederlauncher
-        leftFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoLeft");
-
-        rightFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoRight");
+        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft", -1);
+        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight", 1);
 
         intake = hardwareMap.get(DcMotor.class, "intake");
 
