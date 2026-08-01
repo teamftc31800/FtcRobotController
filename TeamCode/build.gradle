@@ -26,4 +26,5 @@ android {
 
 dependencies {
     implementation project(':FtcRobotController')
+    implementation 'com.pedropathing:ftc:2.0.4'
 }
