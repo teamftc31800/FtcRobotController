@@ -12,13 +12,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
-import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 import org.firstinspires.ftc.teamcode.mechanisms.CameraSettings;
 import org.firstinspires.ftc.teamcode.mechanisms.FieldConfig;
 import org.firstinspires.ftc.teamcode.mechanisms.PinpointOdometry;
-import org.firstinspires.ftc.teamcode.mechanisms.RobotLocalizer;
+import org.firstinspires.ftc.teamcode.mechanisms.RobotLocalizerEDITEDBYCLAUDE;
 import org.firstinspires.ftc.teamcode.mechanisms.RPM_per_dist;
-import org.firstinspires.ftc.teamcode.mechanisms.AprilTagWebcam;
 import org.firstinspires.ftc.teamcode.mechanisms.RGBIndicatorLight;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -49,7 +47,7 @@ public class TeamBotTeleop_SyncFeeder extends OpMode {
 
     // Localizer: fused odometry + camera position
     private PinpointOdometry odometry;
-    private RobotLocalizer localizer;
+    private RobotLocalizerEDITEDBYCLAUDE localizer;
 
     // Auto-orientation is active only while X button is HELD down (not toggled)
 
@@ -444,7 +442,7 @@ public class TeamBotTeleop_SyncFeeder extends OpMode {
                     GoBildaPinpointDriver.EncoderDirection.REVERSED,
                     GoBildaPinpointDriver.EncoderDirection.REVERSED
             );
-            localizer = new RobotLocalizer(
+            localizer = new RobotLocalizerEDITEDBYCLAUDE(
                     odometry,
                     FieldConfig.intoTheDeep2025(),
                     0, 0, 0,  // starting field position

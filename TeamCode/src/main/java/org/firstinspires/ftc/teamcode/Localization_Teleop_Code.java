@@ -10,7 +10,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainCon
 import org.firstinspires.ftc.teamcode.mechanisms.CameraSettings;
 import org.firstinspires.ftc.teamcode.mechanisms.FieldConfig;
 import org.firstinspires.ftc.teamcode.mechanisms.PinpointOdometry;
-import org.firstinspires.ftc.teamcode.mechanisms.RobotLocalizer;
+import org.firstinspires.ftc.teamcode.mechanisms.RobotLocalizerEDITEDBYCLAUDE;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -43,7 +43,7 @@ public class Localization_Teleop_Code extends OpMode {
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
     private PinpointOdometry odometry;
-    private RobotLocalizer localizer;
+    private RobotLocalizerEDITEDBYCLAUDE localizer;
 
     // Odometry pod offsets — tune these with GP2 D-pad
     private double xOffset = 0.0;    // lateral offset of forward pod (left=+, right=-)
@@ -154,7 +154,7 @@ public class Localization_Teleop_Code extends OpMode {
                     GoBildaPinpointDriver.EncoderDirection.REVERSED,
                     GoBildaPinpointDriver.EncoderDirection.REVERSED
             );
-            localizer = new RobotLocalizer(
+            localizer = new RobotLocalizerEDITEDBYCLAUDE(
                     odometry,
                     FieldConfig.intoTheDeep2025(),
                     0, 0, 0,

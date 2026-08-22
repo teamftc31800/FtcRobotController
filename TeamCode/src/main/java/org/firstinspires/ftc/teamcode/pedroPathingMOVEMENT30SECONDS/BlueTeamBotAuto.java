@@ -1,5 +1,5 @@
 
-package org.firstinspires.ftc.teamcode.pedroPathing; // make sure this aligns with class location
+package org.firstinspires.ftc.teamcode.pedroPathingMOVEMENT30SECONDS; // make sure this aligns with class location
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
@@ -10,11 +10,12 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
 import org.firstinspires.ftc.teamcode.mechanisms.FeederLauncher;
 
-@Autonomous(name = "RedTeamBotAuto", group = "Examples")
+@Autonomous(name = "BlueTeamBotAuto", group = "Examples")
 @Disabled
-public class RedTeamBotAuto extends OpMode {
+public class BlueTeamBotAuto extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
@@ -31,9 +32,9 @@ public class RedTeamBotAuto extends OpMode {
 
     PATHSTATE pathState;
 
-    private final Pose startPose = new Pose(125.78, 124.07, Math.toRadians(225)); // Start Pose of our robot.
-    private final Pose scorePose = new Pose(103.30, 102.45, Math.toRadians(45)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
-    private final Pose endPose = new Pose(110.3529411764706, 95.76470588235296, Math.toRadians(45)); // Highest (First Set) of Artifacts from the Spike Mark.
+    private final Pose startPose = new Pose(19.294117647058822, 123.05882352941175, Math.toRadians(315)); // Start Pose of our robot.
+    private final Pose scorePose = new Pose(52, 90.8235294117647, Math.toRadians(135)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
+    private final Pose endPose = new Pose(44, 83.05882352941175, Math.toRadians(135)); // Highest (First Set) of Artifacts from the Spike Mark.
 //    private final Pose pickup2Pose = new Pose(24, 24, Math.toRadians(90)); // Middle (Second Set) of Artifacts from the Spike Mark.
 //    private final Pose pickup3Pose = new Pose(12, 12, Math.toRadians(90)); // Lowest (Third Set) of Artifacts from the Spike Mark.
 

@@ -1,5 +1,5 @@
 
-package org.firstinspires.ftc.teamcode.pedroPathing; // make sure this aligns with class location
+package org.firstinspires.ftc.teamcode.pedroPathingMOVEMENT30SECONDS; // make sure this aligns with class location
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
@@ -7,7 +7,6 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -15,9 +14,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.mechanisms.FeederLauncher;
 
-
-@Autonomous(name = "RedTeamBotAutoNearShort", group = "Examples")
-public class RedTeamBotAutoNearShort extends OpMode {
+@Autonomous(name = "BlueTeamBotAutoNearShort", group = "Examples")
+public class BlueTeamBotAutoNearShort extends OpMode {
 
     private Follower follower;
     private ElapsedTime pathTimer, actionTimer, opmodeTimer, intakeTimer;
@@ -68,10 +66,10 @@ public class RedTeamBotAutoNearShort extends OpMode {
 
     PATHSTATE pathState;
 
-    private final Pose startPose = new Pose(124.941, 123.059,  Math.toRadians(225)); // Start Pose of our robot.
-    private final Pose scorePose = new Pose(98.118, 96.941, Math.toRadians(225)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
-    private final Pose returnPose = new Pose(116.471, 115.529, Math.toRadians(225));
-    private final Pose endPose = new Pose(123.059, 107.059, Math.toRadians(225)); // Highest (First Set) of Artifacts from the Spike Mark.
+    private final Pose startPose = new Pose(20.941, 121.647,  Math.toRadians(315)); // Start Pose of our robot.
+    private final Pose scorePose = new Pose(47.99, 95.29, Math.toRadians(315)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
+    private final Pose returnPose = new Pose(30.588, 112.253, Math.toRadians(315));
+    private final Pose endPose = new Pose(20.706, 104.235, Math.toRadians(315)); // Highest (First Set) of Artifacts from the Spike Mark.
 //    private final Pose pickup2Pose = new Pose(24, 24, Math.toRadians(90)); // Middle (Second Set) of Artifacts from the Spike Mark.
 //    private final Pose pickup3Pose = new Pose(12, 12, Math.toRadians(90)); // Lowest (Third Set) of Artifacts from the Spike Mark.
 
@@ -326,9 +324,8 @@ public class RedTeamBotAutoNearShort extends OpMode {
         shootstate = SHOOTSTATE.SHOOT_1;
 
         //leftfeederlauncher
-        leftFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoLeft", -1);
-
-        rightFeederLauncher.init(hardwareMap,telemetry,"launcher","feederServoRight", 1);
+        leftFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoLeft", -1);
+        rightFeederLauncher.init(hardwareMap, telemetry, "launcher", "feederServoRight", 1);
 
         intake = hardwareMap.get(DcMotor.class, "intake");
 

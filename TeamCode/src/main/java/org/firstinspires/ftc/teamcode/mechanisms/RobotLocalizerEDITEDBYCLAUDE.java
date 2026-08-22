@@ -17,7 +17,7 @@ import java.util.List;
  *   localizer.update(aprilTag.getDetections());
  *   double x = localizer.getX();  // inches
  */
-public class RobotLocalizer {
+public class RobotLocalizerEDITEDBYCLAUDE {
 
     private final PinpointOdometry odometry;
     private final FieldConfig fieldConfig;
@@ -45,6 +45,10 @@ public class RobotLocalizer {
     private double lastCorrectionDeltaY;
 
     /**
+     * Constructor — sets up the localizer with a starting position and takes
+     * a "snapshot" of the current odometry reading so the very first call to
+     * update() doesn't see a huge fake jump in position.
+     *
      * @param odometry        initialized PinpointOdometry instance
      * @param fieldConfig     season-specific tag positions and camera offsets
      * @param startX          starting X position on field (inches)
@@ -52,7 +56,7 @@ public class RobotLocalizer {
      * @param startHeadingDeg starting heading (degrees)
      * @param correctionAlpha blend weight for camera corrections (0.0-1.0, recommend 0.3)
      */
-    public RobotLocalizer(
+    public RobotLocalizerEDITEDBYCLAUDE(
             PinpointOdometry odometry,
             FieldConfig fieldConfig,
             double startX, double startY, double startHeadingDeg,
@@ -65,7 +69,7 @@ public class RobotLocalizer {
         this.headingDeg = startHeadingDeg;
         this.correctionAlpha = correctionAlpha;
 
-        // Snapshot current odometry so first delta is zero
+        // Snapshot current odometry so the first delta computed in update() is zero
         odometry.update();
         this.lastOdoX = odometry.getX();
         this.lastOdoY = odometry.getY();
@@ -73,12 +77,23 @@ public class RobotLocalizer {
     }
 
     /**
-     * Call every loop iteration.
+     * The main loop method — call this once every loop iteration.
+     * It does two jobs, in order:
+     *   1. Always trust Pinpoint for how far the robot moved since last loop
+     *      (fast and smooth, but slowly drifts over time).
+     *   2. If any AprilTags are visible this loop, nudge our position toward
+     *      what the camera says is true (slow/intermittent, but doesn't drift).
+     *
      * @param detections current AprilTag detections (may be null or empty)
      */
     public void update(List<AprilTagDetection> detections) {
 
         // --- Step 1: Apply odometry delta ---
+        // Read the Pinpoint's current position, figure out how much it moved
+        // since the last loop (the "delta"), and add that delta onto our
+        // running fused position. We use deltas instead of just copying
+        // Pinpoint's value directly so that a camera correction applied last
+        // loop (Step 2) doesn't get overwritten/erased this loop.
         odometry.update();
         double odoX = odometry.getX();
         double odoY = odometry.getY();
@@ -88,32 +103,49 @@ public class RobotLocalizer {
         y += odoY - lastOdoY;
         headingDeg = normalizeAngle(headingDeg + (odoHeading - lastOdoHeading));
 
+        // Remember this loop's odometry reading so next loop can compute its own delta
         lastOdoX = odoX;
         lastOdoY = odoY;
         lastOdoHeading = odoHeading;
 
+
+
+
+
+
+
         // --- Step 2: AprilTag correction ---
         lastUpdateHadTagCorrection = false;
 
+        // No tags seen this loop -> nothing to correct, keep the odometry-only position
         if (detections == null || detections.isEmpty()) return;
 
         double sumX = 0, sumY = 0, sumHeading = 0;
         int count = 0;
 
+        // A single loop can see multiple tags at once — turn each one into a
+        // "here's where I think the robot is" estimate, then average them.
         for (AprilTagDetection detection : detections) {
+            // ftcPose is null if the camera saw the tag but couldn't solve its 3D pose
             if (detection.ftcPose == null) continue;
 
+            // Skip tags we don't have a known field position for (e.g. wrong season/id)
             FieldConfig.TagFieldPose tagPose = fieldConfig.getTagById(detection.id);
             if (tagPose == null) continue;
 
-            double[] robotPose = computeRobotPoseFromTag(
+            // Combine "where the tag lives on the field" with "how far/what angle
+            // the camera saw it at" to back-calculate where the robot must be
+            double[] robotPose = AprilTagPoseMathCLAUDE.computeRobotPoseFromTag(
                     tagPose.x, tagPose.y, tagPose.headingDeg,
+                    fieldConfig.cameraForwardOffset, fieldConfig.cameraRightOffset,
                     detection.ftcPose.range,
                     detection.ftcPose.bearing,
                     detection.ftcPose.yaw
             );
 
-            // Sanity check: reject wild outliers
+            // Sanity check: reject wild outliers (e.g. misidentified tag, bad
+            // reflection) that disagree with odometry by more than 24 inches,
+            // so one bad frame can't teleport the robot's tracked position
             double dx = robotPose[0] - x;
             double dy = robotPose[1] - y;
             if (Math.sqrt(dx * dx + dy * dy) > MAX_CORRECTION_INCHES) continue;
@@ -124,13 +156,18 @@ public class RobotLocalizer {
             count++;
         }
 
+        // Every detection this loop was rejected/unusable -> nothing to blend in
         if (count == 0) return;
 
+        // Average all the surviving per-tag estimates into one camera pose
         double tagX = sumX / count;
         double tagY = sumY / count;
         double tagHeading = sumHeading / count;
 
-        // Weighted blend toward camera estimate
+        // Weighted blend toward camera estimate. We don't snap straight to the
+        // camera's number (that would cause visible jumps/jitter) — instead we
+        // move a fraction (correctionAlpha) of the way there each loop, so the
+        // position eases toward "truth" smoothly over a few loops.
         lastCorrectionDeltaX = tagX - x;
         lastCorrectionDeltaY = tagY - y;
 
@@ -145,57 +182,14 @@ public class RobotLocalizer {
     }
 
     // ---------------------------------------------------------------
-    // AprilTag → robot field position math
-    // ---------------------------------------------------------------
-
-    /**
-     * Given a tag's known field position and the camera's detection of that tag,
-     * compute where the robot must be on the field.
-     *
-     * @return double[3] = { robotX, robotY, robotHeadingDeg }
-     */
-    private double[] computeRobotPoseFromTag(
-            double tagFieldX, double tagFieldY, double tagFieldHeadingDeg,
-            double range, double bearing, double yaw
-    ) {
-        // Step 1: Robot heading — tag faces outward at tagFieldHeadingDeg.
-        // If camera looks straight at the tag face (yaw=0), camera points
-        // opposite to tag normal → cameraHeading = tagHeading + 180.
-        // yaw rotates that: positive yaw = tag rotated CW from camera's view.
-        double robotHeadingDeg = normalizeAngle(tagFieldHeadingDeg + 180.0 - yaw);
-        double robotHeadingRad = Math.toRadians(robotHeadingDeg);
-
-        // Step 2: Camera-to-tag vector in camera frame
-        // bearing: positive = tag is to the right of camera center
-        double bearingRad = Math.toRadians(bearing);
-        double dxCam = range * Math.sin(bearingRad);   // + = right
-        double dyCam = range * Math.cos(bearingRad);   // + = forward
-
-        // Step 3: Rotate camera-frame vector into field frame
-        double cosH = Math.cos(robotHeadingRad);
-        double sinH = Math.sin(robotHeadingRad);
-        double fieldDx = dxCam * cosH - dyCam * sinH;
-        double fieldDy = dxCam * sinH + dyCam * cosH;
-
-        // Step 4: Camera offset from robot center, in field frame
-        double camFwd = fieldConfig.cameraForwardOffset;
-        double camRight = fieldConfig.cameraRightOffset;
-        double camOffX = camFwd * cosH - camRight * sinH;
-        double camOffY = camFwd * sinH + camRight * cosH;
-
-        // Step 5: Robot position = tag position - camera-to-tag vector - camera offset
-        double robotX = tagFieldX - fieldDx - camOffX;
-        double robotY = tagFieldY - fieldDy - camOffY;
-
-        return new double[]{ robotX, robotY, robotHeadingDeg };
-    }
-
-    // ---------------------------------------------------------------
     // Getters
     // ---------------------------------------------------------------
 
+    /** Fused field X position, in inches — the best current guess after odometry + camera blending. */
     public double getX() { return x; }
+    /** Fused field Y position, in inches — the best current guess after odometry + camera blending. */
     public double getY() { return y; }
+    /** Fused heading, in degrees — the best current guess after odometry + camera blending. */
     public double getHeadingDeg() { return headingDeg; }
 
     // ---------------------------------------------------------------
@@ -218,11 +212,22 @@ public class RobotLocalizer {
     // Tuning
     // ---------------------------------------------------------------
 
+    /**
+     * Adjusts how strongly camera corrections pull the fused position each loop.
+     * 0.0 = ignore the camera entirely (pure odometry). 1.0 = snap fully to the
+     * camera's estimate every time a tag is seen (can look jumpy). Value is
+     * clamped into the valid 0.0-1.0 range so a typo can't break the blend math.
+     */
     public void setCorrectionAlpha(double alpha) {
         this.correctionAlpha = Math.max(0.0, Math.min(1.0, alpha));
     }
 
-    /** Hard reset — use when you know the exact position (e.g., after auto). */
+    /**
+     * Hard reset — use when you know the exact position (e.g., after auto).
+     * Unlike the normal odometry-delta blending in update(), this directly
+     * overwrites the fused pose and re-snapshots odometry, so no correction
+     * math or smoothing is applied.
+     */
     public void resetPose(double newX, double newY, double newHeadingDeg) {
         this.x = newX;
         this.y = newY;
@@ -237,7 +242,12 @@ public class RobotLocalizer {
     // Utility
     // ---------------------------------------------------------------
 
-    /** Normalize angle to [-180, +180]. */
+    /**
+     * Normalize angle to [-180, +180]. Needed because angles wrap around
+     * (e.g. 350 degrees and -10 degrees are the same heading) — without this,
+     * subtracting two headings near the wraparound point could produce a huge
+     * fake jump (like 350) instead of the small true difference (like -20).
+     */
     private static double normalizeAngle(double degrees) {
         degrees = degrees % 360.0;
         if (degrees > 180.0) degrees -= 360.0;

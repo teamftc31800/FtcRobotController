@@ -1,10 +1,9 @@
-package org.firstinspires.ftc.teamcode.pedroPathing;
+package org.firstinspires.ftc.teamcode.pedroPathingMOVEMENT30SECONDS;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -12,10 +11,18 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.mechanisms.FeederLauncher;
+import org.firstinspires.ftc.teamcode.mechanisms.RGBIndicatorLight;
+import org.firstinspires.ftc.teamcode.mechanisms.RPM_per_dist;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-@Autonomous(name = "RedTeamBotAutoFarShort", group = "Examples")
-public class RedTeamBotAutoFarShort extends OpMode {
+import java.util.List;
+@Disabled
+@Autonomous(name = "RedTeamBotAutoFarShortAutoadjust", group = "Examples")
+public class RedTeamBotAutoFarShort_Autoadjust extends OpMode {
 
     private Follower follower;
     private ElapsedTime pathTimer, actionTimer, opmodeTimer, intakeTimer;
@@ -76,6 +83,21 @@ public class RedTeamBotAutoFarShort extends OpMode {
     private FeederLauncher leftFeederLauncher = new FeederLauncher();
     private FeederLauncher rightFeederLauncher = new FeederLauncher();
 
+    // AprilTag vision — measures distance to target for RPM/angle lookup
+    private VisionPortal visionPortal = null;
+    private AprilTagProcessor aprilTagProcessor = null;
+    private double webcamDistance = 0.0;
+    private double webcamBearing = 0.0;
+    private boolean webcamTagDetected = false;
+    private static final int TARGET_TAG_ID = 24; // Red alliance tag
+
+    // Distance-based RPM and arm angle lookup (reused from TeleOp)
+    private final RPM_per_dist distToRPM = new RPM_per_dist();
+    private double targetShootRPM = 3075; // fallback if no tag detected
+
+    // RGB indicator — shows auto-adjust status
+    private final RGBIndicatorLight light = new RGBIndicatorLight();
+
     // ------------------- PATH BUILDING -------------------
     public void buildPaths() {
         leavelaunchline = new Path(new BezierLine(scorePose, endPose));
@@ -117,17 +139,18 @@ public class RedTeamBotAutoFarShort extends OpMode {
 
     // ------------------- SHOOTING -------------------
     public void shootLeftArtifacts() {
-        leftFeederLauncher.launch(3075, 0, true, true);
+        leftFeederLauncher.launch(targetShootRPM, 0, true, true);
     }
 
     public void shootRightArtifacts() {
-        rightFeederLauncher.launch(3075, 0, true, true);
+        rightFeederLauncher.launch(targetShootRPM, 0, true, true);
     }
 
     public void shootUpdate() {
         switch (shootstate) {
             case SHOOT_1:
-                // Start left shoot first
+                // Measure distance and set RPM + arm angle before shooting
+                adjustShootingParams();
                 shootLeftArtifacts();
                 shootDelayTimer = new ElapsedTime(); // initialize timer for delay
                 shootstate = SHOOTSTATE.SHOOT_1_LEFT_UPDATE;
@@ -174,6 +197,8 @@ public class RedTeamBotAutoFarShort extends OpMode {
                 break;
 
             case SHOOT_2:
+                // Re-measure distance (may have shifted after intake)
+                adjustShootingParams();
                 shootLeftArtifacts();
                 shootDelayTimer.reset();
                 shootstate = SHOOTSTATE.SHOOT_2_LEFT_UPDATE;
@@ -265,6 +290,36 @@ public class RedTeamBotAutoFarShort extends OpMode {
 
         telemetry.addData("intake", hasIntake ? "OK" : "MISSING");
         arm.scaleRange(0.2, 0.8);
+
+        // RGB indicator
+        light.init(hardwareMap, telemetry, "indicator");
+
+        // AprilTag vision — same setup as SyncFeeder TeleOp
+        try {
+            aprilTagProcessor = new AprilTagProcessor.Builder().build();
+            visionPortal = new VisionPortal.Builder()
+                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                    .addProcessor(aprilTagProcessor)
+                    .setCameraResolution(new android.util.Size(640, 480))
+                    .build();
+
+            // Wait for camera with 3-second timeout
+            Thread.sleep(250);
+            long webcamTimeout = System.currentTimeMillis() + 3000;
+            while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
+                if (System.currentTimeMillis() > webcamTimeout) {
+                    visionPortal.close();
+                    visionPortal = null;
+                    telemetry.addLine("⚠️ Webcam timed out");
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            if (visionPortal != null) telemetry.addLine("Webcam OK");
+        } catch (Exception e) {
+            telemetry.addData("⚠️ Webcam init failed", e.getMessage());
+            visionPortal = null;
+        }
     }
 
     @Override
@@ -278,16 +333,23 @@ public class RedTeamBotAutoFarShort extends OpMode {
         leftFeederLauncher.launch(0, 0, false, false);
         rightFeederLauncher.launch(0, 0, false, false);
 
-       // arm.setPosition(0.5);
-
-        double presetPos = degToServoPos(120.0);
-        arm.setPosition(presetPos);
+        // Arm angle is now set dynamically by adjustShootingParams() before each shot
+        // Set initial position as fallback
+        arm.setPosition(degToServoPos(120.0));
     }
 
     @Override
     public void stop() {
         leftFeederLauncher.stop();
         rightFeederLauncher.stop();
+        if (hasIntake) intake.setPower(0);
+        if (visionPortal != null) {
+            try {
+                visionPortal.stopStreaming();
+                visionPortal.close();
+            } catch (Exception e) {}
+            visionPortal = null;
+        }
     }
 
 
@@ -297,5 +359,45 @@ public class RedTeamBotAutoFarShort extends OpMode {
         t = Math.max(0.0, Math.min(1.0, t));   // clamp
         // map into [SERVO_MIN, SERVO_MAX]
         return SERVO_MIN + t * (SERVO_MAX - SERVO_MIN);
+    }
+
+    // ------------------- APRIL TAG VISION -------------------
+    // Scans for target tag and updates webcamDistance/webcamBearing
+    private void updateAprilTag() {
+        webcamTagDetected = false;
+        if (aprilTagProcessor == null) return;
+
+        List<AprilTagDetection> detections = aprilTagProcessor.getDetections();
+        for (AprilTagDetection detection : detections) {
+            if (detection.metadata != null && detection.id == TARGET_TAG_ID) {
+                webcamTagDetected = true;
+                webcamDistance = detection.ftcPose.range;
+                webcamBearing = detection.ftcPose.bearing;
+                break;
+            }
+        }
+    }
+
+    // Reads AprilTag distance, looks up RPM and arm angle from table, sets arm
+    private void adjustShootingParams() {
+        updateAprilTag();
+        if (webcamTagDetected) {
+            // Distance-based RPM from lookup table
+            targetShootRPM = distToRPM.getFlywheelRPMForDistance(webcamDistance);
+
+            // Distance-based arm angle from lookup table
+            double targetAngle = distToRPM.getArmAngleForDistance(webcamDistance);
+            arm.setPosition(degToServoPos(targetAngle));
+
+            light.green();  // GREEN = tag detected, auto-adjust active
+
+            telemetry.addData("AutoAdjust", "%.0f\" → %.0f RPM, %.0f°",
+                    webcamDistance, targetShootRPM, targetAngle);
+        } else {
+            light.white();  // WHITE = no tag, using fallback
+            telemetry.addLine("AutoAdjust: no tag — using fallback 3075 RPM / 120°");
+            targetShootRPM = 3075;
+            arm.setPosition(degToServoPos(120.0));
+        }
     }
 }
