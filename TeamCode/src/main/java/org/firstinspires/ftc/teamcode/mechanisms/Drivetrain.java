@@ -1,3 +1,13 @@
+
+
+
+
+
+// THIS CODE MIGHT BE IRRELEVANT. MAINLY TO EXPLAIN HOW THE DRIVETRAIN OPMODE WORKS
+
+
+
+
 package org.firstinspires.ftc.teamcode.mechanisms;
 
 import com.qualcomm.robotcore.hardware.DcMotor;

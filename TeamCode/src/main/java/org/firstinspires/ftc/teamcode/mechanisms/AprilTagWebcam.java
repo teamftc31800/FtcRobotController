@@ -1,3 +1,10 @@
+
+// THIS CODE MIGHT BE IRRELEVANT. MAINLY TO EXPLAIN HOW APRILTAG VISION PROCESSING WORKS, SO MAYBE REVIEW IT AFTER MEET 3
+
+
+
+
+
 package org.firstinspires.ftc.teamcode.mechanisms;
 
 import android.util.Size;
@@ -44,22 +51,26 @@ public class AprilTagWebcam {
         this.telemetry = telemetry;
 
         // Build a custom AprilTag library (defines IDs, names, and tag sizes)
+        //Object construction
         AprilTagLibrary.Builder tagbuilder = new AprilTagLibrary.Builder();
+
+
+        //tagbuilder is the new object creted and it uses that to put in new values in the instance fields
+        // there are four instacne fields
+
         tagbuilder.addTag(20, "Tag20", 0.166, DistanceUnit.METER);
         tagbuilder.addTag(21, "Tag21", 0.166, DistanceUnit.METER);
         tagbuilder.addTag(22, "Tag22", 0.166, DistanceUnit.METER);
         tagbuilder.addTag(23, "Tag23", 0.166, DistanceUnit.METER);
         tagbuilder.addTag(24, "Tag24", 0.166, DistanceUnit.METER);
 
-        // ...add other tags if desired
 
         // Final library object containing all registered tags
         AprilTagLibrary library = tagbuilder.build();
 
         // Create the AprilTag detector and configure drawing + output units
         aprilTagProcessor = new AprilTagProcessor.Builder()
-                .setDrawTagID(true)           // Show tag ID on screen
-                .setDrawTagOutline(true)      // Show tag borders
+                .setDrawTagID(true)           // Show tag ID on screen.setDrawTagOutline(true)      // Show tag borders
                 .setDrawAxes(true)            // Show tag orientation axes
                 .setDrawCubeProjection(true)  // 3D cube overlay for visualization
                 .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
@@ -67,6 +78,8 @@ public class AprilTagWebcam {
                 .build();
 
         // Open camera and attach AprilTag processor
+
+        // Object creation. One question is where is the declaration name.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(hwMap.get(WebcamName.class, "Webcam 1"))
                 .setCameraResolution(new Size(640, 480))   // Camera resolution

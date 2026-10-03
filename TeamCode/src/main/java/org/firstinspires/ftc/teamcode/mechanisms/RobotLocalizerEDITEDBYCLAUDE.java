@@ -35,14 +35,25 @@ public class RobotLocalizerEDITEDBYCLAUDE {
     // Correction weight: 0.0 = trust only odometry, 1.0 = trust only camera
     private double correctionAlpha;
 
-    // Reject camera estimates that differ from odometry by more than this (inches)
-    private static final double MAX_CORRECTION_INCHES = 24.0;
+    // Reject camera estimates that differ from odometry by more than this (inches).
+    // Not final: widen it with setMaxCorrectionInches() when deliberately testing
+    // with a tag coordinate that's far from where odometry thinks the robot is.
+    private double maxCorrectionInches = 24.0;
 
     // Diagnostics
     private boolean lastUpdateHadTagCorrection;
     private int tagCorrectionCount;
     private double lastCorrectionDeltaX;
     private double lastCorrectionDeltaY;
+
+    // Raw (unblended) pose computed from the tag(s) this update, before the
+    // outlier check and before easing toward it — lets you compare the math's
+    // raw output against your own hand-calculated expected value.
+    private boolean lastUpdateSawUsableTag;
+    private boolean lastUpdateRejectedAsOutlier;
+    private double lastTagOnlyX;
+    private double lastTagOnlyY;
+    private double lastTagOnlyHeadingDeg;
 
     /**
      * Constructor — sets up the localizer with a starting position and takes
@@ -116,10 +127,18 @@ public class RobotLocalizerEDITEDBYCLAUDE {
 
         // --- Step 2: AprilTag correction ---
         lastUpdateHadTagCorrection = false;
+        lastUpdateSawUsableTag = false;
+        lastUpdateRejectedAsOutlier = false;
 
         // No tags seen this loop -> nothing to correct, keep the odometry-only position
         if (detections == null || detections.isEmpty()) return;
 
+        // rawSum* includes every detection with a known tag ID, regardless of
+        // distance from the current fused pose — this is what "the math says",
+        // for debugging. sum*/count is the same but with outliers removed,
+        // and is what actually gets blended into the fused pose below.
+        double rawSumX = 0, rawSumY = 0, rawSumHeading = 0;
+        int rawCount = 0;
         double sumX = 0, sumY = 0, sumHeading = 0;
         int count = 0;
 
@@ -143,12 +162,18 @@ public class RobotLocalizerEDITEDBYCLAUDE {
                     detection.ftcPose.yaw
             );
 
+            rawSumX += robotPose[0];
+            rawSumY += robotPose[1];
+            rawSumHeading += robotPose[2];
+            rawCount++;
+
             // Sanity check: reject wild outliers (e.g. misidentified tag, bad
-            // reflection) that disagree with odometry by more than 24 inches,
-            // so one bad frame can't teleport the robot's tracked position
+            // reflection) that disagree with odometry by more than
+            // maxCorrectionInches, so one bad frame can't teleport the
+            // robot's tracked position
             double dx = robotPose[0] - x;
             double dy = robotPose[1] - y;
-            if (Math.sqrt(dx * dx + dy * dy) > MAX_CORRECTION_INCHES) continue;
+            if (Math.sqrt(dx * dx + dy * dy) > maxCorrectionInches) continue;
 
             sumX += robotPose[0];
             sumY += robotPose[1];
@@ -156,8 +181,20 @@ public class RobotLocalizerEDITEDBYCLAUDE {
             count++;
         }
 
+        if (rawCount > 0) {
+            lastUpdateSawUsableTag = true;
+            lastTagOnlyX = rawSumX / rawCount;
+            lastTagOnlyY = rawSumY / rawCount;
+            lastTagOnlyHeadingDeg = rawSumHeading / rawCount;
+        }
+
         // Every detection this loop was rejected/unusable -> nothing to blend in
-        if (count == 0) return;
+        if (count == 0) {
+            // If we saw a usable tag but it still got thrown out, it was the
+            // outlier filter (maxCorrectionInches), not a missing/unknown tag ID
+            lastUpdateRejectedAsOutlier = rawCount > 0;
+            return;
+        }
 
         // Average all the surviving per-tag estimates into one camera pose
         double tagX = sumX / count;
@@ -208,6 +245,21 @@ public class RobotLocalizerEDITEDBYCLAUDE {
     /** Y component of the most recent correction (inches). */
     public double getLastCorrectionDeltaY() { return lastCorrectionDeltaY; }
 
+    /** True if at least one detected tag had a known FieldConfig entry this update (even if later rejected as an outlier). */
+    public boolean hadUsableTagThisUpdate() { return lastUpdateSawUsableTag; }
+
+    /** True if a usable tag was seen but every candidate pose was farther than maxCorrectionInches from the current fused pose. */
+    public boolean wasLastTagRejectedAsOutlier() { return lastUpdateRejectedAsOutlier; }
+
+    /** Raw field X computed from the tag(s) this update, before outlier rejection and before easing — only valid if hadUsableTagThisUpdate(). */
+    public double getLastTagOnlyX() { return lastTagOnlyX; }
+
+    /** Raw field Y computed from the tag(s) this update, before outlier rejection and before easing — only valid if hadUsableTagThisUpdate(). */
+    public double getLastTagOnlyY() { return lastTagOnlyY; }
+
+    /** Raw heading computed from the tag(s) this update, before outlier rejection and before easing — only valid if hadUsableTagThisUpdate(). */
+    public double getLastTagOnlyHeadingDeg() { return lastTagOnlyHeadingDeg; }
+
     // ---------------------------------------------------------------
     // Tuning
     // ---------------------------------------------------------------
@@ -221,6 +273,19 @@ public class RobotLocalizerEDITEDBYCLAUDE {
     public void setCorrectionAlpha(double alpha) {
         this.correctionAlpha = Math.max(0.0, Math.min(1.0, alpha));
     }
+
+    /**
+     * Widens or tightens the outlier-rejection distance (inches). Raise this
+     * (or pass a huge value) when deliberately testing with a tag coordinate
+     * far from the robot's current position, so the correction isn't silently
+     * thrown out. Lower/leave at the default for real matches, so a
+     * misidentified tag can't teleport the tracked position.
+     */
+    public void setMaxCorrectionInches(double inches) {
+        this.maxCorrectionInches = Math.max(0.0, inches);
+    }
+
+    public double getMaxCorrectionInches() { return maxCorrectionInches; }
 
     /**
      * Hard reset — use when you know the exact position (e.g., after auto).

@@ -25,11 +25,12 @@ public final class AprilTagPoseMathCLAUDE {
      * @param yaw     detection yaw (degrees, + = tag rotated CW from camera's view)
      * @return double[3] = { robotX, robotY, robotHeadingDeg }
      */
-    public static double[] computeRobotPoseFromTag(
-            double tagFieldX, double tagFieldY, double tagFieldHeadingDeg,
-            double cameraForwardOffset, double cameraRightOffset,
-            double range, double bearing, double yaw
-    ) {
+
+
+           // TO DO  - UPDATE ROBOT HEADING IF CAMERA HEADING IS DIFFERENT FROM ROBOT HEADING
+
+    // THE FOLLOWING METHOD TRIES TO FIND OUT WHERE THE ROBOT IS ON THE FIELD IN COORDINATES
+    public static double[] computeRobotPoseFromTag(double tagFieldX, double tagFieldY, double tagFieldHeadingDeg, double cameraForwardOffset, double cameraRightOffset, double range, double bearing, double yaw) {
         // Step 1: Robot heading — tag faces outward at tagFieldHeadingDeg.
         // If camera looks straight at the tag face (yaw=0), camera points
         // opposite to tag normal → cameraHeading = tagHeading + 180.
@@ -59,6 +60,9 @@ public final class AprilTagPoseMathCLAUDE {
 
         return new double[]{ robotX, robotY, robotHeadingDeg };
     }
+
+
+
 
     /** Normalize angle to [-180, +180]. */
     public static double normalizeAngle(double degrees) {

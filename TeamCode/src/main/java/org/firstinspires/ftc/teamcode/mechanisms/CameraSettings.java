@@ -1,9 +1,33 @@
+
+
+
+
+
 package org.firstinspires.ftc.teamcode.mechanisms;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
+
+
+
+
+
+
+
+
+
+
+// THIS CODE MIGHT BE IRRELEVANT. MAINLY TO EXPLAIN HOW APRILTAG CAMERA SETTINGS, SO MAYBE REVIEW IT AFTER MEET 3
+
+
+
+
+
+
+
+
 
 /**
  * Shared camera settings used by all TeleOp programs.
@@ -23,10 +47,10 @@ public class CameraSettings {
     private static final String KEY_GAIN = "gain";
 
     /** Camera exposure in milliseconds. */
-    public static long exposure = 6;
+    public static long exposure = 9;
 
     /** Camera gain. */
-    public static int gain = 250;
+    public static int gain = 105;
 
     /**
      * Load saved settings from disk. Call in init() of every program

@@ -47,7 +47,10 @@ public class PinpointOdometry {
 
     public double getX() { return currentPose.getX(DistanceUnit.INCH); }
     public double getY() { return currentPose.getY(DistanceUnit.INCH); }
-    public double getHeadingDeg() { return currentPose.getHeading(AngleUnit.DEGREES); }
+    public double getHeadingDeg() {
+        return currentPose.getHeading(AngleUnit.DEGREES);
+
+    }
 
     public void setPose(double x, double y, double headingDeg) {
         currentPose = new Pose2D(DistanceUnit.INCH, x, y, AngleUnit.DEGREES, headingDeg);
